@@ -1,21 +1,18 @@
 const http = require('http');
+const { success, notFound } = require('../lib/responses');
 
 const clearButton = http.createServer((request, response) => {
   const match = request.url.match(/^\/$/);
 
   if (!match) {
-    response.writeHead(404);
-    response.end();
-    return;
+    return notFound(response);
   }
 
-  response.writeHead(200, {
-    'Content-Type': 'text/html'
+  success(response, {
+    content: `
+      <button>Clear</button>
+    `
   });
-
-  response.end(`
-    <button>Clear</button>
-  `);
 });
 
 clearButton.listen(process.env.PORT);

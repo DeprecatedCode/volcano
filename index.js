@@ -3,6 +3,10 @@ const fs            = require('fs');
 const http          = require('http');
 const path          = require('path');
 
+const baseModulePath = path.join(process.cwd(), process.argv[2]);
+let currentPort = parseInt(process.env.PORT) + 1;
+const lavaResources = {};
+
 const volcano = http.createServer((request, response) => {
   const allocationMatch = request.url.match(/^\/\.lava\/resources(\/.*)$/);
   if (allocationMatch) {
@@ -14,26 +18,27 @@ const volcano = http.createServer((request, response) => {
     return resourceFor(parseInt(resourcesMatch[1]), resourcesMatch[2], request, response);
   }
 
-  const match = request.url.match(/^\/$/);
+  if (request.url === '/.lava/lava.js') {
+    response.writeHead(200, {
+      'Content-Type': 'application/javascript'
+    });
 
-  if (!match) {
-    response.writeHead(404);
-    response.end();
-    return;
+    response.end(fs.readFileSync(path.join(__dirname, 'lava', 'lava.js')).toString());
   }
 
-  response.writeHead(200, {
-    'Content-Type': 'text/html'
-  });
+  if (request.url === '/') {
+    response.writeHead(200, {
+      'Content-Type': 'text/html'
+    });
 
-  response.end(fs.readFileSync('examples/calculator/index.html').toString());
+    response.end(fs.readFileSync(path.join(baseModulePath, 'index.html')).toString());
+  }
+
+  response.writeHead(404);
+  response.end();
 });
 
 volcano.listen(process.env.PORT);
-
-const baseModulePath = path.join(process.cwd(), process.argv[2]);
-let currentPort = parseInt(process.env.PORT) + 1;
-const lavaResources = {};
 
 function allocateResource(url, request, response) {
   function done() {

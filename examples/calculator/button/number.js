@@ -1,23 +1,20 @@
 const http = require('http');
+const { success, notFound } = require('../lib/responses');
 
 const numberButton = http.createServer((request, response) => {
   const match = request.url.match(/^\/(\d)$/);
 
   if (!match) {
-    response.writeHead(404);
-    response.end();
-    return;
+    return notFound(response);
   }
 
   const number = match[1];
 
-  response.writeHead(200, {
-    'Content-Type': 'text/html'
+  success(response, {
+    content: `
+      <button>${number}</button>
+    `
   });
-
-  response.end(`
-    <button>${number}</button>
-  `);
 });
 
 numberButton.listen(process.env.PORT);

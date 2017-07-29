@@ -1,47 +1,7 @@
 <!doctype html>
 <head>
   <title>Calculator Demo</title>
-  <script type="text/javascript">
-    function lavaError(element, message) {
-      element.innerHTML = '<div class="lava--error"><b>Error:</b> ' + message + '</div>';
-    }
-
-    function lava(element, path) {
-      var modulePath = path.split(':')[0];
-      fetch('/.lava/resources' + modulePath)
-        .then(function (response) {
-          if (response.status === 200) {
-            response.json().then(function (resource) {
-              fetch('/.lava/' + resource.port + '/' + path.replace(resource.url, ''))
-                .then(function (response) {
-                  if (response.status === 200) {
-                    response.text().then(function (content) {
-                      element.innerHTML = content.replace(/@lava\(([^)]*)\)/g, function (_, path) {
-                        var id = Math.random().toString(36).substr(2) + ':' + path;
-                        var childElement = document.createElement('div');
-                        var modulePath = path.split(':')[0];
-                        childElement.classList.add(modulePath.substr(1).replace(/\//g, '--'));
-                        setTimeout(function () {
-                          var placeholderElement = document.getElementById(id);
-                          placeholderElement.replaceWith(childElement);
-                          lava(childElement, path);
-                        });
-                        return '<div id="' + id + '"></div>';
-                      });
-                    });
-                  }
-                  else {
-                    lavaError(element, 'Unable to load component at ' + path + '.');
-                  }
-                });
-            });
-          }
-          else {
-            lavaError(element, 'Unable to load resource at ' + path + '.');
-          }
-        });
-    }
-  </script>
+  <script type="text/javascript" src="/.lava/lava.js"></script>
   <style type="text/css">
     html {
       background: #555;
