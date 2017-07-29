@@ -1,0 +1,103 @@
+<!doctype html>
+<head>
+  <title>Calculator Demo</title>
+  <script type="text/javascript">
+    function lavaError(element, message) {
+      element.innerHTML = '<div class="lava--error"><b>Error:</b> ' + message + '</div>';
+    }
+
+    function lava(element, path) {
+      var modulePath = path.split(':')[0];
+      fetch('/.lava/resources' + modulePath)
+        .then(function (response) {
+          if (response.status === 200) {
+            response.json().then(function (resource) {
+              fetch('/.lava/' + resource.port + '/' + path.replace(resource.url, ''))
+                .then(function (response) {
+                  if (response.status === 200) {
+                    response.text().then(function (content) {
+                      element.innerHTML = content.replace(/@lava\(([^)]*)\)/g, function (_, path) {
+                        var id = Math.random().toString(36).substr(2) + ':' + path;
+                        var childElement = document.createElement('div');
+                        var modulePath = path.split(':')[0];
+                        childElement.classList.add(modulePath.substr(1).replace(/\//g, '--'));
+                        setTimeout(function () {
+                          var placeholderElement = document.getElementById(id);
+                          placeholderElement.replaceWith(childElement);
+                          lava(childElement, path);
+                        });
+                        return '<div id="' + id + '"></div>';
+                      });
+                    });
+                  }
+                  else {
+                    lavaError(element, 'Unable to load component at ' + path + '.');
+                  }
+                });
+            });
+          }
+          else {
+            lavaError(element, 'Unable to load resource at ' + path + '.');
+          }
+        });
+    }
+  </script>
+  <style type="text/css">
+    html {
+      background: #555;
+    }
+    body {
+      width: 300px;
+      height: 500px;
+      margin: 3em auto;
+      background: #ccc;
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      box-shadow: 4px 4px 16px #333;
+      position: relative;
+    }
+    .lava--error {
+      font-family: sans-serif;
+      background: #ffb8b0;
+      color: #420;
+      font-size: 16px;
+      padding: 20px;
+    }
+    body > .lava--error {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  </style>
+  <style>
+    .display {
+      background: black;
+      color: #ace;
+      font-family: monospace;
+      font-size: 40px;
+      padding: 20px;
+      margin: 4px;
+      height: 220px;
+    }
+    .keypad--row {
+      display: flex;
+    }
+    .keypad--row > div {
+      flex: 1;
+      margin: 4px;
+    }
+    .keypad--row button {
+      width: 100%;
+      height: 50px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <script type="text/javascript">
+    lava(document.body, '/layout');
+  </script>
+</body>
