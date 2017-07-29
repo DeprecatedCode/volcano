@@ -1,5 +1,6 @@
 const http = require('http');
 const { success, notFound } = require('../lib/responses');
+const { ready } = require('../lib/notify-parent-process');
 
 const calculateButton = http.createServer((request, response) => {
   const match = request.url.match(/^\/$/);
@@ -10,9 +11,9 @@ const calculateButton = http.createServer((request, response) => {
 
   success(response, {
     content: `
-      <button>=</button>
+      <button lava-click>=</button>
     `
   });
 });
 
-calculateButton.listen(process.env.PORT);
+calculateButton.listen(process.env.PORT, ready);

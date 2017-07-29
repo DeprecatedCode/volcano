@@ -1,5 +1,6 @@
 const http = require('http');
 const { success, notFound } = require('../lib/responses');
+const { ready } = require('../lib/notify-parent-process');
 
 const operatorButton = http.createServer((request, response) => {
   const match = request.url.match(/^\/(add|subtract|multiply|divide)$/);
@@ -19,9 +20,9 @@ const operatorButton = http.createServer((request, response) => {
 
   success(response, {
     content: `
-      <button>${operators[operator]}</button>
+      <button lava-click="${operator}">${operators[operator]}</button>
     `
   });
 });
 
-operatorButton.listen(process.env.PORT);
+operatorButton.listen(process.env.PORT, ready);

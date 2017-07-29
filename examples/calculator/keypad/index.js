@@ -1,5 +1,6 @@
 const http = require('http');
 const { success, notFound } = require('../lib/responses');
+const { ready } = require('../lib/notify-parent-process');
 
 const keypad = http.createServer((request, response) => {
   const match = request.url.match(/^\/$/);
@@ -33,4 +34,4 @@ const keypad = http.createServer((request, response) => {
   });
 });
 
-keypad.listen(process.env.PORT);
+keypad.listen(process.env.PORT, ready);

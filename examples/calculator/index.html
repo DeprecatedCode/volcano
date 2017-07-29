@@ -40,6 +40,8 @@
       padding: 20px;
       margin: 4px;
       height: 220px;
+      word-wrap: break-word;
+      overflow-y: auto;
     }
     .keypad--row {
       display: flex;
@@ -53,11 +55,26 @@
       height: 50px;
       font-weight: bold;
       font-size: 18px;
+      color: #444;
+    }
+    .button--number button {
+      color: #079;
+    }
+    .button--clear button {
+      color: #800;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+    .button--calculate button {
+      font-size: 30px;
+      padding-bottom: 8px;
+      color: #888;
     }
   </style>
 </head>
 <body>
   <script type="text/javascript">
     lava(document.body, '/layout');
+    document.body.addEventListener('click', lava.click);
   </script>
 </body>

@@ -51,33 +51,37 @@ function allocateResource(url, request, response) {
     );
   }
 
-  if (!(url in lavaResources)) {
-    let modulePath = path.join(baseModulePath, url);
-
-    console.log(`Starting new process '${url}' on port ${currentPort}`);
-
-    child_process.fork(modulePath, [], {
-      env: {
-        PORT: currentPort
-      }
-    });
-
-    lavaResources[url] = {
-      url,
-      port: currentPort
-    };
-    currentPort++;
-
-    return setTimeout(done, 200);
+  if (url in lavaResources) {
+    return done();
   }
 
-  done();
+  let modulePath = path.join(baseModulePath, url);
+
+  console.log(`LAVA • Starting new process '${url}' on port ${currentPort}`);
+
+  const child = child_process.fork(modulePath, [], {
+    env: {
+      PORT: currentPort
+    }
+  });
+
+  lavaResources[url] = {
+    url,
+    port: currentPort
+  };
+  currentPort++;
+
+  child.on('message', function (message) {
+    if (message.type === 'ready') {
+      console.log(`LAVA • ... process '${url}' on port ${currentPort} is ready!`);
+      done();
+    }
+  });
 }
 
-function resourceFor(port, fullPath, request, response) {
+function resourceFor(port, path, request, response) {
   const hostname = 'localhost';
   const { headers, method } = request;
-  let [modulePath, path] = `${fullPath}:/`.split(':');
   headers.host = `${hostname}:${port}`;
 
   const options = {
@@ -87,6 +91,8 @@ function resourceFor(port, fullPath, request, response) {
     headers,
     method
   };
+
+  console.log('LAVA • Proxy request', options.method, options.port, options.path);
 
   const resourceRequest = http.request(options, function(resourceResponse) {
     response.writeHead(resourceResponse.statusCode, resourceResponse.headers);
