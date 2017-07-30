@@ -4,7 +4,8 @@ const http          = require('http');
 const path          = require('path');
 
 const baseModulePath = path.join(process.cwd(), process.argv[2]);
-let currentPort = parseInt(process.env.PORT) + 1;
+let port = parseInt(process.env.PORT) || 15000;
+let processPort = port + 1;
 const lavaResources = {};
 
 const volcano = http.createServer((request, response) => {
@@ -38,7 +39,14 @@ const volcano = http.createServer((request, response) => {
   response.end();
 });
 
-volcano.listen(process.env.PORT);
+volcano.listen(port, function (error) {
+  if (error) {
+    console.error(error);
+  }
+  else {
+    console.log(`LAVA • Listening on http://localhost:${port}`);
+  }
+});
 
 function allocateResource(url, request, response) {
   function done() {
@@ -57,23 +65,23 @@ function allocateResource(url, request, response) {
 
   let modulePath = path.join(baseModulePath, url);
 
-  console.log(`LAVA • Starting new process '${url}' on port ${currentPort}`);
+  console.log(`LAVA • Starting new process '${url}' on port ${processPort}`);
 
   const child = child_process.fork(modulePath, [], {
     env: {
-      PORT: currentPort
+      PORT: processPort
     }
   });
 
   lavaResources[url] = {
     url,
-    port: currentPort
+    port: processPort
   };
-  currentPort++;
+  processPort++;
 
   child.on('message', function (message) {
     if (message.type === 'ready') {
-      console.log(`LAVA • ... process '${url}' on port ${currentPort} is ready!`);
+      console.log(`LAVA • ... process '${url}' on port ${processPort} is ready!`);
       done();
     }
   });
