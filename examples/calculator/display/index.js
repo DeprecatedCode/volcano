@@ -10,10 +10,20 @@ const display = http.createServer((request, response) => {
     return notFound(response);
   }
 
+  function formatExpression(expression) {
+    return ` ${expression} `.replace(/(\d+)(\.?\d*)/g, function (_, whole, part) {
+      return whole.replace(/(\d)((\d{3})+)$/g, function (_, first, rest) {
+        return first + rest.replace(/\d{3}/g, function (match) {
+          return `,${match}`;
+        });
+      }) + part;
+    }).trim();
+  }
+
   if (request.method === 'POST') {
     return readJSON(request, function (input) {
       success(response, {
-        content: input.state
+        content: formatExpression(input.state)
       });
     });
   }

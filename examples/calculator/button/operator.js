@@ -3,7 +3,7 @@ const { success, notFound } = require('../lib/responses');
 const { ready } = require('../lib/notify-parent-process');
 
 const operatorButton = http.createServer((request, response) => {
-  const match = request.url.match(/^\/(add|subtract|multiply|divide)$/);
+  const match = request.url.match(/^\/(add|subtract|multiply|divide|power)$/);
 
   if (!match) {
     return notFound(response);
@@ -15,7 +15,8 @@ const operatorButton = http.createServer((request, response) => {
     add: '+',
     subtract: '-',
     multiply: '*',
-    divide: '/'
+    divide: '/',
+    power: '^'
   };
 
   success(response, {

@@ -5,7 +5,9 @@ function lava(element, path) {
       lava.loadModule(element, modulePath, path, resource);
     })
     .catch(function (error) {
-      console.error(error);
+      if (error) {
+        console.error(error);
+      }
       lava.renderError(element, 'Unable to load resource at ' + path + '.');
     });
 }
@@ -26,13 +28,17 @@ lava.action = function (sourceModule, action, destinationModule, destinationElem
           }
         })
         .catch(function (error) {
-          console.error(error);
+          if (error) {
+            console.error(error);
+          }
           lava.renderError(destinationElement, 'Unable to process event ' +
             sourceModule + ':' + action + ' for module ' + destinationModule);
         });
     })
     .catch(function (error) {
-      console.error(error);
+      if (error) {
+        console.error(error);
+      }
       lava.renderError(element, 'Unable to load resource at ' + path + '.');
     });
 };
@@ -167,7 +173,9 @@ lava.loadModule = function (element, modulePath, path, resource) {
     element.innerHTML = module.content.replace(/@lava\(([^)]*)\)/g, lava.childComponent(element));
   })
   .catch(function (error) {
-    console.error(error);
+    if (error) {
+      console.error(error);
+    }
     lava.renderError(element, 'Unable to load module at ' + path + '.');
   });
 };
