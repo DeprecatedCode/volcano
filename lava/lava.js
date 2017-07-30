@@ -1,6 +1,6 @@
 function lava(element, path) {
   var modulePath = path.split(':')[0];
-  lava.get('/.lava/resources' + modulePath)
+  lava.getResource(modulePath)
     .then(function (resource) {
       lava.loadModule(element, modulePath, path, resource);
     })
@@ -19,7 +19,7 @@ lava.action = function (sourceModule, action, destinationModule, destinationElem
     data.state = JSON.parse(destinationElement.getAttribute('lava-state'));
   }
 
-  lava.get('/.lava/resources' + destinationModule)
+  lava.getResource(destinationModule)
     .then(function (resource) {
       lava.post('/.lava/' + resource.port + '/.event', data)
         .then(function (response) {
@@ -137,6 +137,27 @@ lava.get = function (url) {
     });
   });
 };
+
+lava.resourceMap = {};
+lava.resourcePromiseMap = {};
+
+lava.getResource = function (path) {
+  if (path in lava.resourceMap) {
+    return Promise.resolve(lava.resourceMap[path]);
+  }
+
+  if (path in lava.resourcePromiseMap) {
+    return lava.resourcePromiseMap[path];
+  }
+
+  lava.resourcePromiseMap[path] = lava.get('/.lava/resources' + path)
+    .then(function (resource) {
+      lava.resourceMap[path] = resource;
+      return resource;
+    });
+
+  return lava.resourcePromiseMap[path];
+}
 
 lava.loadModule = function (element, modulePath, path, resource) {
   var attributes = element.hasAttribute('lava-attributes') ?
