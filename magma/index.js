@@ -1,80 +1,165 @@
-const fs            = require('fs');
-const http          = require('http');
-const path          = require('path');
+/**
+ * Magma distributed component store
+ * @author Nate Ferrero <volcanictortoise@gmail.com>
+ */
+const http = require('http');
+const fs   = require('fs');
+const path = require('path');
 
-const baseModulePath = path.join(process.cwd(), process.argv[2]);
-let port = parseInt(process.env.PORT) || 15000;
-let processPort = port + 1;
+const { env: { PORT = 11000 }} = process;
 
-const defaultComponentPath = path.join(baseModulePath, 'default.magma');
-const componentsPath = path.join(baseModulePath, 'magma-components');
+const basePath = path.join(process.cwd(), process.argv[3]);
 
-try {
-  fs.statSync(componentsPath);
-}
-catch (e) {
-  fs.mkdirSync(componentsPath);
+if (!fs.existsSync(basePath)) {
+  throw new Error('Path does not exist: ' + basePath);
 }
 
-function uniqueId() {
-  return [Date.now(), Math.random(), Math.random()]
-    .map(x => x.toString(36).replace('0', ''))
-    .join('');
+const magmaModulesPath = path.join(basePath, 'magma-modules');
+
+if (!fs.existsSync(magmaModulesPath)) {
+  fs.mkdirSync(magmaModulesPath);
 }
 
-function componentBasePath(id) {
-  return path.join(componentsPath, id);
-}
-
-function createComponent() {
-  const id = uniqueId();
-  const path = componentBasePath(id);
-  fs.mkdirSync(path);
-  return id;
-}
-
-const magma = http.createServer((request, response) => {
-  if (request.url === '/.magma/magma.js') {
-    response.writeHead(200, {
-      'Content-Type': 'application/javascript'
+const file = (...filePath) => ({
+  get read() {
+    return new Promise((resolve, reject) => {
+      fs.readFile(path.join(...filePath), (error, contents) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve(contents.toString());
+      });
     });
+  },
 
-    response.end(fs.readFileSync(path.join(__dirname, 'magma.js')).toString());
-  }
+  get readJSON() {
+    return this.read.then(JSON.parse);
+  },
 
-  if (request.url === '/.magma/default') {
-    response.writeHead(200, {
-      'Content-Type': 'text/plain'
+  write(contents) {
+    return new Promise((resolve, reject) => {
+      fs.writeFile(path.join(...filePath), contents, error => {
+        if (error) {
+          return reject(error);
+        }
+        resolve(contents);
+      });
     });
-    let defaultComponent;
-    try {
-      defaultComponent = fs.readFileSync(defaultComponentPath).toString();
-    }
-    catch (e) {
-      defaultComponent = createComponent();
-      fs.writeFileSync(defaultComponentPath, defaultComponent);
-    }
+  },
 
-    response.end(defaultComponent);
+  writeJSON(contents) {
+    return this.write(JSON.stringify(contents));
   }
-
-  if (request.url === '/') {
-    response.writeHead(200, {
-      'Content-Type': 'text/html'
-    });
-
-    response.end(fs.readFileSync(path.join(__dirname, 'index.html')).toString());
-  }
-
-  response.writeHead(404);
-  response.end();
 });
 
-magma.listen(port, function (error) {
-  if (error) {
-    console.error(error);
-  }
-  else {
-    console.log(`Magma • Listening on http://localhost:${port}`);
-  }
+const makeDirectory = (...directoryPath) => new Promise((resolve, reject) => {
+  fs.mkdir(path.join(...directoryPath), (error) => {
+    if (error) {
+      return reject(error);
+    }
+    resolve();
+  });
 });
+
+const CONTENT_TYPE_CSS   = { 'Content-Type': 'text/css' };
+const CONTENT_TYPE_HTML  = { 'Content-Type': 'text/html' };
+const CONTENT_TYPE_JS    = { 'Content-Type': 'application/javascript' };
+const CONTENT_TYPE_JSON  = { 'Content-Type': 'application/json' };
+const CONTENT_TYPE_PLAIN = { 'Content-Type': 'text/plain' };
+
+class Magma {
+  async get(url) {
+    console.log('GET', url);
+
+    if (url === '/') {
+      const head = '<head><link rel="stylesheet" href="stylesheet"></head>';
+      const body = '<body><script src="client"></script></body>';
+      return { headers: CONTENT_TYPE_HTML, contents: head + body };
+    }
+
+    if (url === '/client') {
+      return file(__dirname, 'client.js').read.then(contents => (
+        { headers: CONTENT_TYPE_JS, contents }
+      ));
+    }
+
+    if (url === '/stylesheet') {
+      return file(__dirname, 'stylesheet.css').read.then(contents => (
+        { headers: CONTENT_TYPE_CSS, contents }
+      ));
+    }
+
+    if (url === '/default') {
+      const defaultFile = file(basePath, 'default.json');
+      return defaultFile.read.catch(error =>
+        this.createModule().then(module =>
+          defaultFile.writeJSON(module)
+        )
+      ).then(JSON.parse);
+    }
+
+    const moduleMatch = url.match(/^\/module\/([^\/]{26})$/);
+    if (moduleMatch) {
+      const [fullMatch, uniqueId] = moduleMatch;
+      const module = { uniqueId, events: [] };
+      const moduleFile = file(magmaModulesPath, uniqueId, 'module.json');
+      return moduleFile.readJSON.catch(error =>
+        moduleFile.writeJSON(module)
+      );
+    }
+  }
+
+  async post(url) {
+    console.log('POST', url);
+  }
+
+  async createModule() {
+    const uniqueId = this.generateUniqueId();
+    const module = { uniqueId };
+    console.log('Creating module with id', uniqueId);
+    return makeDirectory(magmaModulesPath, uniqueId).then(() => module);
+  }
+
+  generateUniqueId() {
+    return [Date.now(), Math.random(), Math.random()]
+      .map(x => x.toString(36))
+      .map(x => x.replace(/0?\./, ''))
+      .map(x => `${x}00000000`.substr(0, 8))
+      .join('.');
+  }
+
+  get handler() {
+    return (request, response) => {
+      const method = request.method.toLowerCase();
+
+      if (!(method in this)) {
+        response.writeHead(404, CONTENT_TYPE_PLAIN);
+        response.end('Not found');
+        return;
+      }
+
+      this[method](request.url)
+        .then(data => {
+          if (!data) {
+            response.writeHead(404, CONTENT_TYPE_PLAIN);
+            response.end('Not found');
+            return;
+          }
+          if (data.hasOwnProperty('headers')) {
+            response.writeHead(200, data.headers);
+            response.end(data.contents);
+            return;
+          }
+          response.writeHead(200, CONTENT_TYPE_JSON);
+          response.end(JSON.stringify(data));
+        })
+        .catch(error => {
+          console.error(error);
+          response.writeHead(500, CONTENT_TYPE_PLAIN);
+          response.end('Server error');
+        });
+    };
+  }
+}
+
+http.createServer(new Magma().handler).listen(PORT);

@@ -1,0 +1,141 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+.magma-controls {
+  background: #def;
+  border-radius: 3px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  color: #589;
+  font-size: 12px;
+  font-family: "PT Mono", monospace;
+  cursor: pointer;
+  user-select: none;
+  margin: 8px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.magma-controls:hover {
+  background: #eff;
+}
+
+.magma-controls:active {
+  background: #abc;
+}
+
+.magma-unique-id {
+  text-transform: uppercase;
+}
+
+.magma-separator {
+  margin: 0 4px;
+}
+
+.magma-inspect, .magma-controls {
+  display: none;
+}
+
+.magma-edit .magma-inspect, .magma-edit .magma-controls {
+  display: block;
+}
+
+.magma-edit > .magma-root, .magma-edit > .magma-inspect {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  overflow: auto;
+}
+
+.magma-edit > .magma-root {
+  left: 0;
+  right: calc(20% + 200px);
+}
+
+.magma-edit > .magma-inspect {
+  right: 0;
+  width: calc(20% + 200px);
+  background: #046;
+  box-shadow: inset 2px 0 4px 0 #068;
+  font-size: 14px;
+}
+
+.magma-inspect {
+  padding: 8px 16px;
+  box-sizing: border-box;
+  color: white;
+}
+
+.magma-inspect, .magma-inspect > .magma-field {
+  font-family: "PT Mono", monospace;
+}
+
+.magma-inspect--field-title {
+  font-size: 12px;
+  margin: 8px 0 0;
+  text-transform: uppercase;
+}
+
+.magma-inspect > h1 {
+  font-size: 18px;
+  margin: 14px 0 16px;
+  font-weight: normal;
+}
+
+.magma-inspect > .magma-field {
+  color: #234;
+  margin: 4px 0 8px;
+  background: #def;
+  border-radius: 3px;
+  border: none;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+.magma-inspect > textarea.magma-field {
+  height: 25vh;
+  min-height: 200px;
+  max-height: 100vh;
+  resize: vertical;
+}
+
+.magma-button {
+  position: absolute;
+  top: 16px;
+  min-width: 30px;
+  text-align: center;
+  background: #69a;
+  border-radius: 3px;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  padding: 8px 10px 7px;
+}
+
+.magma-button:hover {
+  background: #7ab;
+}
+
+.magma-button:active {
+  background: #589;
+  color: #cde;
+}
+
+.magma-button--close {
+  right: 16px;
+  font-size: 25px;
+  padding: 2px 4px 0;
+}
+
+.magma-button--save {
+  right: 54px;
+}
+
+body {
+  background: black;
+}
