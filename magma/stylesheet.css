@@ -104,8 +104,6 @@ html, body {
 }
 
 .magma-button {
-  position: absolute;
-  top: 16px;
   min-width: 30px;
   text-align: center;
   background: #69a;
@@ -115,6 +113,7 @@ html, body {
   user-select: none;
   font-size: 14px;
   padding: 8px 10px 7px;
+  display: inline-block;
 }
 
 .magma-button:hover {
@@ -127,12 +126,16 @@ html, body {
 }
 
 .magma-button--close {
+  position: absolute;
+  top: 16px;
   right: 16px;
   font-size: 25px;
   padding: 2px 4px 0;
 }
 
 .magma-button--save {
+  position: absolute;
+  top: 16px;
   right: 54px;
 }
 

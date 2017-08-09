@@ -2,11 +2,18 @@ const text = {
   untitledModule: 'Untitled Module'
 };
 
+const ON = 'on';
+const OFF = 'off';
+
+const panel = {};
+
 const store = {
   has: key => key in localStorage,
   get: key => JSON.parse(localStorage.getItem(key)),
+  getString: key => localStorage.getItem(key),
   remove: key => localStorage.removeItem(key),
-  set: (key, value) => localStorage.setItem(key, JSON.stringify(value))
+  set: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
+  setString: (key, value) => localStorage.setItem(key, value)
 };
 
 const get = {
@@ -14,10 +21,22 @@ const get = {
     .then(response => response.json())
 };
 
-const immediate = fn => {
-  fn();
-  return fn;
-}
+const the = it => () => it;
+
+const required = value => {
+  if (!value) {
+    throw new Error('Missing required value');
+  }
+  return value;
+};
+
+Function.prototype.with = function (...args) {
+  return () => this(...args);
+};
+
+Function.prototype.then = function (next) {
+  return (...args) => this(...args).then(next);
+};
 
 const element = domElement => ({
   div(...classes) {
@@ -74,7 +93,7 @@ const element = domElement => ({
       controls.span('magma-unique-id').text(module.uniqueId);
       controls.span('magma-separator').html('&bull;');
       controls.span('magma-title').text(module.title || text.untitledModule);
-      controls.click(() => updateInspectedModule(module));
+      controls.click(updateInspectedModule.with(module));
     };
   },
   get renderField() {
@@ -113,19 +132,71 @@ const element = domElement => ({
 });
 
 const loadModule = module =>
-  get.json('module', module.uniqueId);
+  get.json('module', required(module.uniqueId));
+
+const createModule = () =>
+  get.json('module', 'new');
 
 const magmaRootElement = element(document.body).div('magma-root');
 const magmaInspectElement = element(document.body).div('magma-inspect');
 
-const mainPanel = () => {
+document.addEventListener('keypress', event => {
+  if (event.altKey && event.shiftKey && event.code === 'KeyE') {
+    updateMagmaEditModeState(true);
+  }
+});
+
+const updateMagmaEditModeState = toggle => {
+  const key = 'magma:editMode';
+  let editMode = store.has(key) ? store.get(key) === ON : false;
+  if (toggle) {
+    editMode = !editMode;
+    store.set(key, editMode ? ON : OFF);
+  }
+  document.body.classList.toggle('magma-edit', editMode);
+};
+
+const moduleKey = module => 'magma:module:' + required(module.uniqueId);
+
+const clearInspectedModule = () => {
+  const key = 'magma:inspectedModule';
+  store.remove(key);
+  panel.main();
+};
+
+const updateInspectedModule = module => {
+  const key = 'magma:inspectedModule';
+  let inspectedModuleKey = store.has(key) ? store.getString(key) : null;
+
+  if (module) {
+    inspectedModuleKey = moduleKey(module);
+  }
+
+  let inspectedModule = store.has(inspectedModuleKey) ? store.get(inspectedModuleKey) : null;
+  if (module) {
+    inspectedModule = module;
+    store.set(inspectedModuleKey, inspectedModule);
+    store.setString(key, inspectedModuleKey);
+  }
+  if (inspectedModule) {
+    panel.inspectModule(inspectedModule);
+  }
+  else {
+    panel.main();
+  }
+};
+
+panel.main = () => {
   const inspect = magmaInspectElement;
   inspect.clear();
   inspect.header().text('Magma Inspector');
   inspect.paragraph().text('Select a module to inspect.');
+  inspect.div('magma-button')
+    .text('Create New Module')
+    .click(createModule.then(updateInspectedModule));
 };
 
-const inspectModule = module => {
+panel.inspectModule = module => {
   const inspect = magmaInspectElement;
   inspect.clear();
   inspect.header().text('Module Details');
@@ -144,62 +215,19 @@ const inspectModule = module => {
   inspect.renderField({ module, title: 'Items',       key: 'items',       type: 'array', itemType: 'object' });
 };
 
+const renderModuleAsRoot = loadModule.then(magmaRootElement.renderModule);
+
 if (store.has('default')) {
-  loadModule(store.get('default'))
-    .then(magmaRootElement.renderModule);
+  renderModuleAsRoot(store.get('default'));
 }
 
 else {
   get.json('default').then(defaultModule => {
-    console.log(defaultModule);
     store.set('default', defaultModule);
-    loadModule(defaultModule)
-      .then(magmaRootElement.renderModule);
+    renderModuleAsRoot(defaultModule);
   });
 }
 
-document.addEventListener('keypress', event => {
-  if (event.altKey && event.shiftKey && event.code === 'KeyE') {
-    updateMagmaEditModeState(true);
-  }
-});
+updateMagmaEditModeState();
 
-const updateMagmaEditModeState = immediate(toggle => {
-  const key = 'magma:editMode';
-  let editMode = store.has(key) ? store.get(key) === 'on' : false;
-  if (toggle) {
-    editMode = !editMode;
-    store.set(key, editMode ? 'on' : 'off');
-  }
-  document.body.classList.toggle('magma-edit', editMode);
-});
-
-const moduleKey = module => 'magma:module:' + module.uniqueId;
-
-const clearInspectedModule = () => {
-  const key = 'magma:inspectedModule';
-  store.remove(key);
-  mainPanel();
-};
-
-const updateInspectedModule = immediate(module => {
-  const key = 'magma:inspectedModule';
-  let inspectedModuleKey = store.has(key) ? store.get(key) : null;
-
-  if (module) {
-    inspectedModuleKey = moduleKey(module);
-  }
-
-  let inspectedModule = store.has(inspectedModuleKey) ? store.get(inspectedModuleKey) : null;
-  if (module) {
-    inspectedModule = module;
-    store.set(inspectedModuleKey, inspectedModule);
-    store.set(key, inspectedModuleKey);
-  }
-  if (inspectedModule) {
-    inspectModule(inspectedModule);
-  }
-  else {
-    mainPanel();
-  }
-});
+updateInspectedModule();

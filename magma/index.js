@@ -6,9 +6,26 @@ const http = require('http');
 const fs   = require('fs');
 const path = require('path');
 
+const the = it => () => it;
+
+const required = value => {
+  if (!value) {
+    throw new Error('Missing required value');
+  }
+  return value;
+};
+
+Function.prototype.with = function (...args) {
+  return () => this(...args);
+};
+
+Function.prototype.then = function (next) {
+  return (...args) => this(...args).then(next);
+};
+
 const { env: { PORT = 11000 }} = process;
 
-const basePath = path.join(process.cwd(), process.argv[3]);
+const basePath = path.join(process.cwd(), process.argv.pop());
 
 if (!fs.existsSync(basePath)) {
   throw new Error('Path does not exist: ' + basePath);
@@ -36,8 +53,8 @@ const file = (...filePath) => ({
     return this.read.then(JSON.parse);
   },
 
-  write(contents) {
-    return new Promise((resolve, reject) => {
+  get write() {
+    return contents => new Promise((resolve, reject) => {
       fs.writeFile(path.join(...filePath), contents, error => {
         if (error) {
           return reject(error);
@@ -47,8 +64,11 @@ const file = (...filePath) => ({
     });
   },
 
-  writeJSON(contents) {
-    return this.write(JSON.stringify(contents));
+  get writeJSON() {
+    return contents => {
+      return this.write(JSON.stringify(contents))
+        .then(contents);
+    };
   }
 });
 
@@ -91,21 +111,22 @@ class Magma {
 
     if (url === '/default') {
       const defaultFile = file(basePath, 'default.json');
-      return defaultFile.read.catch(error =>
-        this.createModule().then(module =>
-          defaultFile.writeJSON(module)
-        )
-      ).then(JSON.parse);
+      return defaultFile.readJSON.catch(error =>
+        this.createModule()
+          .then(defaultFile.writeJSON)
+      );
+    }
+
+    if (url === '/module/new') {
+      return this.createModule();
     }
 
     const moduleMatch = url.match(/^\/module\/([^\/]{26})$/);
     if (moduleMatch) {
-      const [fullMatch, uniqueId] = moduleMatch;
+      const [ fullMatch, uniqueId ] = moduleMatch;
       const module = { uniqueId, events: [] };
       const moduleFile = file(magmaModulesPath, uniqueId, 'module.json');
-      return moduleFile.readJSON.catch(error =>
-        moduleFile.writeJSON(module)
-      );
+      return moduleFile.readJSON;
     }
   }
 
@@ -115,13 +136,16 @@ class Magma {
 
   async createModule() {
     const uniqueId = this.generateUniqueId();
-    const module = { uniqueId };
+    const module = { uniqueId, events: [] };
+    const moduleFile = file(magmaModulesPath, uniqueId, 'module.json');
     console.log('Creating module with id', uniqueId);
-    return makeDirectory(magmaModulesPath, uniqueId).then(() => module);
+    return makeDirectory(magmaModulesPath, uniqueId)
+      .then(moduleFile.writeJSON.with(module))
+      .then(the(module));
   }
 
   generateUniqueId() {
-    return [Date.now(), Math.random(), Math.random()]
+    return [ Date.now(), Math.random(), Math.random() ]
       .map(x => x.toString(36))
       .map(x => x.replace(/0?\./, ''))
       .map(x => `${x}00000000`.substr(0, 8))
