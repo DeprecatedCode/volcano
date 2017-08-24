@@ -92,7 +92,12 @@ class Magma {
     console.log('GET', url);
 
     if (url === '/') {
-      const head = '<head><link rel="stylesheet" href="stylesheet"></head>';
+      const head = `
+        <head>
+          <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+          <link rel="stylesheet" href="stylesheet">
+        </head>
+      `;
       const body = '<body><script src="client"></script></body>';
       return { headers: CONTENT_TYPE_HTML, contents: head + body };
     }
@@ -186,4 +191,8 @@ class Magma {
   }
 }
 
-http.createServer(new Magma().handler).listen(PORT);
+const ready = () => {
+  console.log(`Listening on http://localhost:${PORT}`);
+};
+
+http.createServer(new Magma().handler).listen(PORT, ready);
