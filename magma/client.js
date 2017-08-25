@@ -107,11 +107,13 @@ const element = domElement => ({
   get renderField() {
     return field => {
       const { module, title, key, type, itemType, editable, placeholder } = field;
+      const userEditable = editable !== false;
+     
       this.div('magma-inspect--field-title').text(title);
 
       if (type === 'string') {
         const input = this.input('magma-field');
-        if (!editable) {
+        if (!userEditable) {
           input.disabled(true);
         }
         if (placeholder) {
@@ -125,7 +127,7 @@ const element = domElement => ({
 
       if (type === 'script') {
         const textarea = this.textarea('magma-field');
-        if (!editable) {
+        if (!userEditable) {
           textarea.disabled(true);
         }
         if (key in module) {
@@ -136,7 +138,8 @@ const element = domElement => ({
 
       if (type === 'array') {
         const array = this.div('magma-field');
-        if (!editable) {
+        
+        if (!userEditable) {
           array.addClass('disabled');
         }
 
@@ -149,8 +152,31 @@ const element = domElement => ({
           count.text(plural(module[key].length, itemType));
         updateCount();
 
-        const newItem = array.div('new-item');
-        newItem.div('magma-button').text(`Add ${itemType}`);
+        if (userEditable) {
+          const newItem = array.div('new-item');
+          newItem.div('magma-button').text(`Add ${itemType}`);
+        }
+        
+        return;
+      }
+      
+      if (type === 'object') {
+        const object = this.div('magma-field');
+        
+        if (!userEditable) {
+          object.addClass('disabled');
+        }
+
+        if (!(key in module)) {
+          module[key] = {};
+        }
+
+        if (userEditable) {
+          const newProperty = object.div('new-property');
+          newProperty.div('magma-button').text(`Add property`);
+        }
+ 
+        return;
       }
 
       console.log(field);
@@ -175,7 +201,7 @@ document.addEventListener('keypress', event => {
 
 const updateMagmaEditModeState = toggle => {
   const key = 'magma:editMode';
-  let editMode = store.has(key) ? store.get(key) === ON : false;
+  let editMode = store.has(key) && store.get(key) === ON;
   if (toggle) {
     editMode = !editMode;
     store.set(key, editMode ? ON : OFF);

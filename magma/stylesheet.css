@@ -101,6 +101,10 @@ html, body {
   font-size: 16px;
 }
 
+.magma-inspect > .magma-field:last-child {
+  margin-bottom: 16px;
+}
+
 .magma-inspect > textarea.magma-field {
   height: 25vh;
   min-height: 200px;
