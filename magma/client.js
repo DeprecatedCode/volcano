@@ -260,38 +260,40 @@ panel.inspectModule = module => {
     .html('Save')
     .click(clearInspectedModule);
 
-  inspect.renderField({ module, title: 'Unique Id',
-                        key: 'uniqueId',
-                        type: 'string',
-                        editable: false });
+  [
+    { module, title: 'Unique Id',
+      key: 'uniqueId',
+      type: 'string',
+      editable: false },
 
-  inspect.renderField({ module, title: 'Title',
-                        key: 'title',
-                        type: 'string',
-                        placeholder: text.untitledModule  });
+    { module, title: 'Title',
+      key: 'title',
+      type: 'string',
+      placeholder: text.untitledModule  },
 
-  inspect.renderField({ module, title: 'Events',
-                        key: 'events',
-                        type: 'array',
-                        itemType: 'module' });
+    { module, title: 'Events',
+      key: 'events',
+      type: 'array',
+      itemType: 'module' },
 
-  inspect.renderField({ module, title: 'Render',
-                        key: 'render',
-                        type: 'script' });
+    { module, title: 'Render',
+      key: 'render',
+      type: 'script' },
 
-  inspect.renderField({ module, title: 'Settings',
-                        key: 'settings', 
-                        type: 'object' });
+    { module, title: 'Settings',
+      key: 'settings',
+      type: 'object' },
 
-  inspect.renderField({ module, title: 'Item Format',
-                        key: 'itemFormat',
-                        type: 'object' });
+    { module, title: 'Item Format',
+      key: 'itemFormat',
+      type: 'object' },
 
-  inspect.renderField({ module, title: 'Items',
-                        key: 'items',
-                        type: 'array',
-                        itemType: 'object',
-                        formatKey: 'itemFormat' });
+    { module, title: 'Items',
+      key: 'items',
+      type: 'array',
+      itemType: 'object',
+      formatKey: 'itemFormat' }
+  ].forEach(inspect.renderField);
 };
 
 const renderModuleAsRoot = loadModule.then(magmaRootElement.renderModule);
