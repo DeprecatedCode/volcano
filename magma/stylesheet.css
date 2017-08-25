@@ -84,6 +84,11 @@ html, body {
   font-weight: normal;
 }
 
+.magma-inspect > .magma-field > .magma-inspect--field-title {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
 .magma-inspect > .magma-field {
   color: #234;
   margin: 4px 0 8px;

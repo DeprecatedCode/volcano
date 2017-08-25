@@ -7,6 +7,9 @@ const OFF = 'off';
 
 const panel = {};
 
+const plural = (count, of) =>
+  `${count} ${of}${count === 1 ? '' : 's'}`;
+
 const store = {
   has: key => key in localStorage,
   get: key => JSON.parse(localStorage.getItem(key)),
@@ -57,11 +60,16 @@ const element = domElement => ({
   textarea(...classes) {
     return this.child('textarea', classes);
   },
+  addClass(...classes) {
+    classes.forEach(name => domElement.classList.add(name));
+    return this;
+  },
   child: (tagname, classes) => {
     const child = document.createElement(tagname);
-    classes.forEach(name => child.classList.add(name));
+    const result = element(child);
     domElement.appendChild(child);
-    return element(child);
+    result.addClass(...classes);
+    return result;
   },
   clear() {
     domElement.innerText = '';
@@ -101,9 +109,9 @@ const element = domElement => ({
       const { module, title, key, type, itemType, editable, placeholder } = field;
       this.div('magma-inspect--field-title').text(title);
 
-      if (field.type === 'string') {
+      if (type === 'string') {
         const input = this.input('magma-field');
-        if (editable === false) {
+        if (!editable) {
           input.disabled(true);
         }
         if (placeholder) {
@@ -115,15 +123,34 @@ const element = domElement => ({
         return;
       }
 
-      if (field.type === 'script') {
+      if (type === 'script') {
         const textarea = this.textarea('magma-field');
-        if (editable === false) {
+        if (!editable) {
           textarea.disabled(true);
         }
         if (key in module) {
           textarea.value(module[key]);
         }
         return;
+      }
+
+      if (type === 'array') {
+        const array = this.div('magma-field');
+        if (!editable) {
+          array.addClass('disabled');
+        }
+
+        if (!(key in module)) {
+          module[key] = [];
+        }
+
+        const count = array.div('magma-inspect--field-title');
+        const updateCount = () =>
+          count.text(plural(module[key].length, itemType));
+        updateCount();
+
+        const newItem = array.div('new-item');
+        newItem.div('magma-button').text(`Add ${itemType}`);
       }
 
       console.log(field);
