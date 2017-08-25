@@ -259,13 +259,39 @@ panel.inspectModule = module => {
   inspect.div('magma-button', 'magma-button--save')
     .html('Save')
     .click(clearInspectedModule);
-  inspect.renderField({ module, title: 'Unique Id',   key: 'uniqueId',    type: 'string', editable: false });
-  inspect.renderField({ module, title: 'Title',       key: 'title',       type: 'string', placeholder: text.untitledModule });
-  inspect.renderField({ module, title: 'Events',      key: 'events',      type: 'array', itemType: 'module' });
-  inspect.renderField({ module, title: 'Render',      key: 'render',      type: 'script' });
-  inspect.renderField({ module, title: 'Settings',    key: 'settings',    type: 'object' });
-  inspect.renderField({ module, title: 'Item Format', key: 'itemFormat',  type: 'object' });
-  inspect.renderField({ module, title: 'Items',       key: 'items',       type: 'array', itemType: 'object' });
+
+  inspect.renderField({ module, title: 'Unique Id',
+                        key: 'uniqueId',
+                        type: 'string',
+                        editable: false });
+
+  inspect.renderField({ module, title: 'Title',
+                        key: 'title',
+                        type: 'string',
+                        placeholder: text.untitledModule  });
+
+  inspect.renderField({ module, title: 'Events',
+                        key: 'events',
+                        type: 'array',
+                        itemType: 'module' });
+
+  inspect.renderField({ module, title: 'Render',
+                        key: 'render',
+                        type: 'script' });
+
+  inspect.renderField({ module, title: 'Settings',
+                        key: 'settings', 
+                        type: 'object' });
+
+  inspect.renderField({ module, title: 'Item Format',
+                        key: 'itemFormat',
+                        type: 'object' });
+
+  inspect.renderField({ module, title: 'Items',
+                        key: 'items',
+                        type: 'array',
+                        itemType: 'object',
+                        formatKey: 'itemFormat' });
 };
 
 const renderModuleAsRoot = loadModule.then(magmaRootElement.renderModule);
